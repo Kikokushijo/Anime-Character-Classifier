@@ -2,7 +2,19 @@ import cv2
 import sys
 import os.path
 
+MAX_IMAGE_PER_FOLDER = 50
 
+def detect(target_path, cascade_file = "lbpcascade_animeface.xml"):
+
+    cur_path = os.getcwd()
+    if not os.path.isfile(os.path.join(cur_path, "opencv", cascade_file)):
+        raise RuntimeError("%s: not found" % cascade_file)
+    cascade = cv2.CascadeClassifier(cascade_file)
+
+    frame_num = 0
+    count = 0
+    while True:
+        pass
 
 """
 def detect(anime_name, chapter, cascade_file = "lbpcascade_animeface.xml"):
