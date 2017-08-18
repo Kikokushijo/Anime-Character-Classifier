@@ -7,51 +7,52 @@ MAX_IMAGE_PER_FOLDER = 50
 def detect(target_path, cascade_file = "lbpcascade_animeface.xml"):
 
     cur_path = os.getcwd()
-    if not os.path.isfile(os.path.join(cur_path, "opencv", cascade_file)):
+    cascade_path = os.path.join(cur_path, "opencv", cascade_file)
+    if not os.path.isfile(cascade_path):
         raise RuntimeError("%s: not found" % cascade_file)
-    cascade = cv2.CascadeClassifier(cascade_file)
+    cascade = cv2.CascadeClassifier(cascade_path)
+
+    frame_path = os.path.join(target_path, "frame")
+    crop_path = os.path.join(target_path, "crop")
 
     frame_num = 0
-    count = 0
-    while True:
-        pass
+    crop_count = 0
+    sub_curr_crop_path = None
+    for folder in os.listdir(frame_path):
+        folder_path = os.path.join(frame_path, folder)
+        for subfolder in os.listdir(folder_path):
+            subfolder_path = os.path.join(folder_path, subfolder)
+            for frame in os.listdir(subfolder_path):
+                
+                if frame_num % 100 == 0:
+                    print("Cropping Frame %d" % frame_num)
 
-"""
-def detect(anime_name, chapter, cascade_file = "lbpcascade_animeface.xml"):
-    script_dir = os.path.dirname(__file__)
-    cascade_file = os.path.join(script_dir, cascade_file)
+                frame_path = os.path.join(subfolder_path, frame)
+                # image = cv2.read(frame)
+                image = cv2.imread(frame_path)
+                # cv2.imshow("test", image)
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                gray = cv2.equalizeHist(gray)
 
-    if not os.path.isfile(cascade_file):
-        raise RuntimeError("%s: not found" % cascade_file)
-    cascade = cv2.CascadeClassifier(cascade_file)
+                # cv2.imshow("test", gray)
+                # cv2.waitKey(0)
+                faces = cascade.detectMultiScale(gray,
+                                        # detector options
+                                                scaleFactor = 1.1,
+                                                minNeighbors = 5,
+                                                minSize = (48, 48))
 
-    frame_num = 0
-    count = 0
-    while True:
-        if frame_num % 5 == 0:
-            print("detect frame %d" % frame_num)
-        frame_dir = "%s/frame/%s-%d-frame%d.jpg" % (anime_name, anime_name, chapter, frame_num)
-        frame_file = os.path.join(script_dir, frame_dir)
-        if not os.path.isfile(frame_file):
-            print(frame_file)
-            break
+                # cv2.imshow(gray)
+                for index, (x, y, w, h) in enumerate(faces, crop_count):
+                    # cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                    crop_img = image[y:(y + h), x:(x + w)]
+                    # cv2.imshow("Crop", crop_img)
+                    # cv2.waitKey(0)
+                    if crop_count % MAX_IMAGE_PER_FOLDER == 0:
+                        sub_crop_path = os.path.join(crop_path, str(crop_count // MAX_IMAGE_PER_FOLDER))
+                        os.makedirs(sub_crop_path, exist_ok = True)
+                    cv2.imwrite(os.path.join(sub_crop_path, "%d.jpg" % crop_count), crop_img)
+                    print("Successfully Crop Out Image %d" % crop_count)
+                    crop_count += 1
 
-        image = cv2.imread(frame_file)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray = cv2.equalizeHist(gray)
-        
-        faces = cascade.detectMultiScale(gray,
-                                         # detector options
-                                         scaleFactor = 1.1,
-                                         minNeighbors = 5,
-                                         minSize = (24, 24))
-        for index, (x, y, w, h) in enumerate(faces, count):
-            # cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            crop_img = image[y:(y + h), x:(x + w)]
-            # cv2.imshow("Crop", crop_img)
-            # cv2.waitKey(0)
-            cv2.imwrite("opencv/%s/crop/out%d.png" % (anime_name, index), crop_img)
-
-        frame_num += 1
-        count += len(faces)
-"""
+                frame_num += 1    
