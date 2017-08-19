@@ -1,5 +1,10 @@
 import tkinter as tk
+from PIL import Image, ImageTk
+# from tkinter import ttk
 import os
+import cv2
+
+MAX_SIZE = 96, 96
 
 class ClassifyDict(object):
     def __init__(self, dict_path):
@@ -15,6 +20,7 @@ class ClassifyDict(object):
             wants_rewrite = self.askRewriteDict()
             if wants_rewrite:
                 self.rewrite()
+            # self.class_name.add("None")
         else:
             pass
 
@@ -88,21 +94,85 @@ class ClassifyDict(object):
         print("---------------------------------------")
         print("")
 
+class Interface(tk.Tk):
+    def __init__(self, class_set, crop_path):
+        super(Interface, self).__init__()
+
+        self.sub_crop_folder_index = 0
+        self.crop_path = crop_path
+
+        self.title("Test")
+        labels_index = [tk.Label(self, text = str(index)) \
+                for index in range(1, len(class_set)+1)]
+        labels_class = [tk.Label(self, text = classes) \
+                for classes in class_set]
+
+        for index, (lindex, lclass) in enumerate(zip(labels_index, labels_class)):
+            lindex.grid(row=index, column=0)
+            lclass.grid(row=index, column=1)
+
+        self.setImage()
+
+        self.mainloop()
+
+        print("test")
+
+    def setImage(self):
+        sub_crop_path = os.path.join(self.crop_path, str(self.sub_crop_folder_index))
+        if os.path.exists(sub_crop_path):
+
+            images = []
+            # photos = []
+            for image in os.listdir(sub_crop_path):
+                image_path = os.path.join(sub_crop_path, image)
+                # print(image_path)
+                # tmp = cv2.imread(image_path)
+                # cv2.imshow("test", tmp)
+                # cv2.waitKey(0)
+                image = Image.open(image_path)
+                image.thumbnail(MAX_SIZE, Image.ANTIALIAS)
+                photo = ImageTk.PhotoImage(image)
+                label = tk.Label(image=photo)
+                label.image = photo
+                images.append(label)
+
+            for index, image in enumerate(images):
+                image.grid(row=index//10, column=index%10+2)
+            # images[0].grid(row=0, column=3)
+
+
 def manClassify(target_path):
 
     training_path = os.path.join(target_path, "training_data")
+    crop_path = os.path.join(target_path, "crop")
     dict_path = os.path.join(training_path, "dict.txt")
-    classifyDict = ClassifyDict(dict_path)
-    print(classifyDict.class_name)
+    classify_dict = ClassifyDict(dict_path)
+    
+    print(classify_dict.class_name)
+
+    interface = Interface(classify_dict.class_name, crop_path)
+    """
+    master = tk.Tk()
+    master.title("Test")
+    tk.Label(master, text="First").grid(row=0)
+    tk.Label(master, text="Second").grid(row=1)
+    tk.Entry(master).grid(row=0, column=1)
+    tk.Entry(master).grid(row=1, column=1)
+    master.mainloop()
 
     window = tk.Tk()
     window.title("Man Classifier")
-    labels = [tk.Label(window, text = "%d %s" % (index, classes)) \
+
+    frame = tk.Frame(window)
+    frame.pack()
+
+    labels = [tk.Label(frame, text = "%d %s" % (index, classes)) \
             for index, classes in enumerate(classifyDict.class_name)]
     for label in labels:
         label.pack()
 
-    button = tk.Button(window, text = "OK")
+    button = tk.Button(frame, text = "OK")
     button.pack()
 
     window.mainloop()
+    """
