@@ -1,4 +1,4 @@
-import pygame
+import tkinter as tk
 import os
 
 class ClassifyDict(object):
@@ -62,7 +62,7 @@ class ClassifyDict(object):
                     if cmd[1] in self.class_name:
                         self.class_name.remove(cmd[1])
                     else:
-                        print("Class %d doesn't exist." % cmd[1])
+                        print("Class %s doesn't exist." % cmd[1])
                 else:
                     self.rewriteHelp()
             elif cmd[0] == "reset":
@@ -93,5 +93,16 @@ def manClassify(target_path):
     training_path = os.path.join(target_path, "training_data")
     dict_path = os.path.join(training_path, "dict.txt")
     classifyDict = ClassifyDict(dict_path)
-    
     print(classifyDict.class_name)
+
+    window = tk.Tk()
+    window.title("Man Classifier")
+    labels = [tk.Label(window, text = "%d %s" % (index, classes)) \
+            for index, classes in enumerate(classifyDict.class_name)]
+    for label in labels:
+        label.pack()
+
+    button = tk.Button(window, text = "OK")
+    button.pack()
+
+    window.mainloop()

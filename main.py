@@ -4,13 +4,13 @@ import opencv.manClassify as mcl
 import sys
 import os
 
-def UsageError():
+def usageError():
     print("UsageError:")
     print("Use \"python main.py saveframe foldername\" to Save Frame")
     print("Use \"python main.py detectface foldername\" to Detect Character Fase")
     print("Use \"python main.py manclassify foldername\" to Classify Training Data")
 
-def PathError(foldername):
+def pathError(foldername):
     print("No Such A Directory.")
     while True:
         ans = input("Create A New Directory Names \"%s\"? (Y/N) " % foldername)
@@ -34,7 +34,7 @@ if __name__ == "__main__":
             if not os.path.exists(target_path):
 
                 # To ask user whether to create a new directory or not
-                wants_create = PathError(sys.argv[2])
+                wants_create = pathError(sys.argv[2])
                 if wants_create:
                     os.makedirs(target_path, exist_ok=True)
                 else:
@@ -57,6 +57,6 @@ if __name__ == "__main__":
                     print("Starting to Man-classify...")
                     mcl.manClassify(target_path = target_path)
                 else:
-                    UsageError()
+                    usageError()
     else:
-        UsageError()
+        usageError()
