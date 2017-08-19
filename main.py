@@ -1,5 +1,6 @@
 import opencv.saveFrame as save
 import opencv.detect as detect
+import opencv.manClassify as mcl
 import sys
 import os
 
@@ -44,6 +45,8 @@ if __name__ == "__main__":
                 os.makedirs(os.path.join(target_path, "video"), exist_ok=True)
                 os.makedirs(os.path.join(target_path, "frame"), exist_ok=True)
                 os.makedirs(os.path.join(target_path, "crop"), exist_ok=True)
+                os.makedirs(os.path.join(target_path, "training_data"), exist_ok = True)
+
                 if sys.argv[1] == "saveframe":
                     print("Starting to Save Frame...")
                     save.saveFrame(target_path = target_path, interval = 1)
@@ -52,7 +55,7 @@ if __name__ == "__main__":
                     detect.detect(target_path = target_path)
                 elif sys.argv[1] == "manclassify":
                     print("Starting to Man-classify...")
-
+                    mcl.manClassify(target_path = target_path)
                 else:
                     UsageError()
     else:
