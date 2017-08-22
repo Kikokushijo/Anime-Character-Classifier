@@ -1,6 +1,6 @@
 import opencv.saveFrame as save
 import opencv.detect as detect
-import opencv.manClassify as mcl
+import opencv.manualClassify as mcl
 import sys
 import os
 
@@ -8,7 +8,7 @@ def usageError():
     print("UsageError:")
     print("Use \"python main.py saveframe foldername\" to Save Frame")
     print("Use \"python main.py detectface foldername\" to Detect Character Fase")
-    print("Use \"python main.py manclassify foldername\" to Classify Training Data")
+    print("Use \"python main.py manualclassify foldername\" to Classify Training Data")
 
 def pathError(foldername):
     print("No Such A Directory.")
@@ -53,9 +53,9 @@ if __name__ == "__main__":
                 elif sys.argv[1] == "detectface":
                     print("Starting to Detect Face...")
                     detect.detect(target_path = target_path)
-                elif sys.argv[1] == "manclassify":
-                    print("Starting to Man-classify...")
-                    mcl.manClassify(target_path = target_path)
+                elif sys.argv[1] == "manualclassify":
+                    print("Starting to Manual classify...")
+                    mcl.manualClassify(target_path = target_path)
                 else:
                     usageError()
     else:
