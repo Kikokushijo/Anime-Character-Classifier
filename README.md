@@ -2,6 +2,7 @@
 WARNING: STILL UNDER CONSTRUCT
 
 This project is just an NN experiment about classifying anime characters.
+opencv, tkinter, 
 
 To start with, you have to create folders and put video into it , and the whole structure should be like below:
 ```
@@ -27,7 +28,7 @@ To start with, you have to create folders and put video into it , and the whole 
 Then you can:
 * Use ```python main.py saveframe foldername ``` to Save Frame
 * Use ```python main.py detectface foldername``` to Detect Character Face
-* Use ```python main.py manclassify foldername``` to Classify Training Data
+* Use ```python main.py manualclassify foldername``` to Classify Training Data
 
 NOTICE:
 * The frames capturing from the video will be saved in ```video\foldername\frame``` folder, with some subfolders in it like below:
@@ -45,6 +46,7 @@ NOTICE:
             \1
             \...        // Depend on how many frames you capture, each subfolder contains 50 frames in default.
         \training_data
+            \dict.txt   // You can put your own class dictionary here
             \0
             \1
             \...        // Depend on how many subclasses you set.

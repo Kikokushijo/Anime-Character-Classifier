@@ -1,6 +1,5 @@
 from PIL import Image, ImageTk, ImageDraw
 from collections import OrderedDict, deque
-from sortedcontainers import SortedSet
 from copy import copy
 import tkinter as tk
 import numpy as np
@@ -10,11 +9,7 @@ import os
 CLS_SIZE = 35
 SEL_SIZE = 60
 ORI_SIZE = 96
-GRID_SIZE = 104
-DICT_TEXT_HEIGHT = 30
-DICT_TEXT_LENGTH = 180
 IMAGE_PER_ROW = 10
-IMAGE_DISPLAY_SIZE = 100
 
 class ClassifyDict(object):
     def __init__(self, dict_path):
@@ -277,15 +272,6 @@ class PhotoButtonFrame(tk.Frame):
 
             for button in self.photoButtons:
                 button.update()
-
-        def multiToggling(event):
-            pass
-
-        def multiSelecting(event):
-            pass
-
-        def multiUnselecting(event):
-            pass
 
         def saveClassifiedStatus(event):
             self.saved_classify_result = []
