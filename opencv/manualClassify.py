@@ -1,5 +1,5 @@
 from PIL import Image, ImageTk, ImageDraw
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from sortedcontainers import SortedSet
 from copy import copy
 import tkinter as tk
@@ -113,21 +113,16 @@ class TextFrame(tk.Frame):
         self.key_pairs = [(str(index), name) for index, name in enumerate(sets, 1)] + \
                          [('0', 'None of Above'),
                           ('X', 'Not Face'),
+                          ('N', 'Unclassify'),
                           (' ', ' '),
                           ('C', 'Convert between Click/Focus Mode'),
-                          ('T', '(In Click Mode)'),
-                          (' ', 'Start/Stop Multi Toggling'),
-                          ('S', '(In Click Mode)'),
-                          (' ', 'Start/Stop Multi Selecting'),
-                          ('U', '(In Click Mode)'),
-                          (' ', 'Start/Stop Multi Unselecting'),
-                          (' ', ' '),
                           ('Ctrl-S', 'Save Current Classified Status'),
                           ('Ctrl-Z', 'Back to Last Saved Status'),
-                          ('Ctrl-R', 'Reset Classified All'),
-                          ('Ctrl-A', 'Select All'),
-                          ('Ctrl-T', 'Toggle All'),
-                          ('Ctrl-Shift-A', 'Select Unclassified All')]
+                          ('Ctrl-R', 'Reset All'),
+                          ('Ctrl-A', 'Select Unclassified All'),
+                          ('Ctrl-T', 'Toggle Unclassified All'),
+                          ('Enter' , 'Complete Classifying and'),
+                          ('      ', 'Switch to Next Folder')]
         self.key_labels = [tk.Label(self, text=key) for key, _ in self.key_pairs]
         self.name_labels = [tk.Label(self, text=class_name) for _, class_name in self.key_pairs]
         for index, label in enumerate(self.key_labels):
@@ -143,6 +138,7 @@ class PhotoButtonFrame(tk.Frame):
             tk.Button.__init__(self, parent, command=lambda i=index:parent.toggle(i))
             self.parent = parent
             self.is_selected = False
+            self.is_focused = False
             self.initializeImg(Image.open(image_path))
             self.grid(row=index//IMAGE_PER_ROW, column=index%IMAGE_PER_ROW)
             self.setClass(None)
@@ -153,7 +149,7 @@ class PhotoButtonFrame(tk.Frame):
             tk_ori_image = ImageTk.PhotoImage(Image.fromarray(ori_image))
 
             sel_image = np.array(img.resize((ORI_SIZE, ORI_SIZE)))
-            cv2.rectangle(sel_image, (0,0), (ORI_SIZE, ORI_SIZE), color=(255,255,255), thickness=40)
+            cv2.rectangle(sel_image, (0,0), (ORI_SIZE, ORI_SIZE), color=(255,255,255), thickness=10)
             tk_sel_image = ImageTk.PhotoImage(Image.fromarray(sel_image))
 
             foc_image = np.array(img.resize((ORI_SIZE, ORI_SIZE)))
@@ -178,17 +174,21 @@ class PhotoButtonFrame(tk.Frame):
             for key, img in self.tmp_img_dict.items():
                 tmp = copy(img)
                 if not None:
+                    cv2.rectangle(img=tmp, pt1=(0,60), pt2=(ORI_SIZE-60, ORI_SIZE), \
+                                  color=(255,255,255), thickness=-1)
                     cv2.putText(img=tmp, text=self.cls, org=(0,90), fontFace=cv2.FONT_HERSHEY_SIMPLEX, \
-                                fontScale=2, color=(0,0,0), thickness=2)
+                                fontScale=1.5, color=(0,0,0), thickness=2)
                 self.cls_img_dict[key] = ImageTk.PhotoImage(Image.fromarray(tmp))
 
         def update(self):
             if self.is_selected:
                 self.config(relief="sunken", image=self.cls_img_dict["sel_image"])
+            elif self.is_focused:
+                self.config(relief="raised", image=self.cls_img_dict["foc_image"])
             else:
                 self.config(relief="raised", image=self.cls_img_dict["ori_image"])
 
-    def __init__(self, parent, crop_path, class_num, folder_index=284):
+    def __init__(self, parent, crop_path, class_num, folder_index=385):
 
         tk.Frame.__init__(self, parent)
         self.parent = parent
@@ -200,6 +200,7 @@ class PhotoButtonFrame(tk.Frame):
         self.is_multi_selecting = False
         self.on_which_button = None
         self.saved_classify_result = [None] * 50
+        self.saved_unclassified = deque([])
 
         sub_crop_path = os.path.join(self.crop_path, str(self.folder_index))
         if os.path.exists(sub_crop_path):
@@ -221,23 +222,61 @@ class PhotoButtonFrame(tk.Frame):
 
     def setBindKey(self):
 
-        def classify(event):
+        def focusModeInit():
+            self.saved_unclassified = deque([])
             for index, button in enumerate(self.photoButtons):
-                if button.is_selected:
-                    if event.char == 'u':
-                        button.setClass(None)
+                button.is_selected = False
+                button.is_focused = False
+                if button.cls is None:
+                    self.saved_unclassified.append(button)
+            if self.saved_unclassified:
+                button = self.saved_unclassified[0]
+                button.is_focused = True
+            for button in self.photoButtons:
+                button.update()
+
+        def clickModeInit():
+            if self.saved_unclassified:
+                button = self.saved_unclassified[0]
+                button.is_focused = False
+                button.update()
+            self.saved_unclassified = deque([])
+
+        def classify(event):
+            if self.select_mode == "Click Mode":
+                for index, button in enumerate(self.photoButtons):
+                    if button.is_selected:
+                        if event.char == 'n':
+                            button.setClass(None)
+                        else:
+                            button.setClass(event.char)
+                        self.toggle(index)
+            else:
+                if self.saved_unclassified:
+                    button = self.saved_unclassified[0]
+                    if event.char == 'n':
+                        pass
                     else:
+                        button.is_focused = False
                         button.setClass(event.char)
-                    self.toggle(index)
+                        button.update()
+                        _ = self.saved_unclassified.popleft()
+
+                        if self.saved_unclassified:
+                            button = self.saved_unclassified[0]
+                            button.is_focused = True
+                            button.update()
 
         def convertSelectMode(event):
             if self.select_mode == "Click Mode":
                 self.select_mode = "Focus Mode"
-                for button in self.photoButtons:
-                    button.is_selected = False
-                    button.update()
+                focusModeInit()
             else:
                 self.select_mode = "Click Mode"
+                clickModeInit()
+
+            for button in self.photoButtons:
+                button.update()
 
         def multiToggling(event):
             pass
@@ -258,10 +297,20 @@ class PhotoButtonFrame(tk.Frame):
                 button.setClass(target_class)
                 button.update()
 
+            if self.select_mode == "Click Mode":
+                clickModeInit()
+            else:
+                focusModeInit()
+
         def resetClassifiedAll(event):
             for button in self.photoButtons:
                 button.setClass(None)
                 button.update()
+
+            if self.select_mode == "Click Mode":
+                clickModeInit()
+            else:
+                focusModeInit()
 
         def selectUnclassifiedAll(event):
             if self.select_mode == "Click Mode":
@@ -286,9 +335,6 @@ class PhotoButtonFrame(tk.Frame):
                           [("x", classify),
                            ("n", classify),
                            ("c", convertSelectMode),
-                           ("t", multiToggling),
-                           ("s", multiSelecting),
-                           ("u", multiUnselecting),
                            ("<Control-s>", saveClassifiedStatus),
                            ("<Control-z>", backToLastSavedStatus),
                            ("<Control-r>", resetClassifiedAll),
