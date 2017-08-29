@@ -134,7 +134,8 @@ class PhotoButtonFrame(tk.Frame):
             self.parent = parent
             self.is_selected = False
             self.is_focused = False
-            self.initializeImg(Image.open(image_path))
+            self.img = Image.open(image_path)
+            self.initializeImg(self.img)
             self.grid(row=index//IMAGE_PER_ROW, column=index%IMAGE_PER_ROW)
             self.setClass(None)
             self.update()
@@ -168,7 +169,7 @@ class PhotoButtonFrame(tk.Frame):
             self.cls = target_class
             for key, img in self.tmp_img_dict.items():
                 tmp = copy(img)
-                if not None:
+                if self.cls is not None:
                     cv2.rectangle(img=tmp, pt1=(0,60), pt2=(ORI_SIZE-60, ORI_SIZE), \
                                   color=(255,255,255), thickness=-1)
                     cv2.putText(img=tmp, text=self.cls, org=(0,90), fontFace=cv2.FONT_HERSHEY_SIMPLEX, \
@@ -183,19 +184,29 @@ class PhotoButtonFrame(tk.Frame):
             else:
                 self.config(relief="raised", image=self.cls_img_dict["ori_image"])
 
-    def __init__(self, parent, crop_path, class_num, folder_index=385):
+    def __init__(self, parent, crop_path, training_path, class_num, folder_index=382):
 
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.crop_path = crop_path
-        self.folder_index = folder_index
+        self.training_path = training_path
         self.class_num = class_num
+        self.photoButtons = []
 
+        self.updateWithFolderIndex(folder_index)
+
+    def updateWithFolderIndex(self, folder_index):
+
+        for button in self.photoButtons:
+            button.destroy()
+
+        self.folder_index = folder_index
         self.select_mode = "Click Mode"
         self.is_multi_selecting = False
         self.on_which_button = None
         self.saved_classify_result = [None] * 50
         self.saved_unclassified = deque([])
+        self.is_completed = False
 
         sub_crop_path = os.path.join(self.crop_path, str(self.folder_index))
         if os.path.exists(sub_crop_path):
@@ -278,6 +289,11 @@ class PhotoButtonFrame(tk.Frame):
             for button in self.photoButtons:
                 self.saved_classify_result.append(button.cls)
 
+            if None in self.saved_classify_result:
+                self.is_completed = False
+            else:
+                self.is_completed = True
+
         def backToLastSavedStatus(event):
             for target_class, button in zip(self.saved_classify_result, self.photoButtons):
                 button.setClass(target_class)
@@ -317,6 +333,24 @@ class PhotoButtonFrame(tk.Frame):
         def leaveButton(event, index):
             self.on_which_button = None
 
+        def toNextFolder(event):
+            if self.is_completed:
+                folder_list = [str(i) for i in range(0,10)]
+                for name in folder_list:
+                    os.makedirs(os.path.join(self.training_path, name), exist_ok=True)
+
+                for index, button in enumerate(self.photoButtons):
+                    if button.cls is not "x":
+                        target_folder = os.path.join(self.training_path, button.cls)
+                        name = os.path.join(target_folder, "%d-%d.jpg"%(self.folder_index, index))
+                        img = button.img.resize((32, 32))
+                        img.save(name)
+
+                print("Complete Folder %d"%self.folder_index)
+                self.updateWithFolderIndex(self.folder_index+1)
+
+
+
         self.bind_pairs = [(str(i), classify) for i in range(self.class_num+1)] + \
                           [("x", classify),
                            ("n", classify),
@@ -325,7 +359,8 @@ class PhotoButtonFrame(tk.Frame):
                            ("<Control-z>", backToLastSavedStatus),
                            ("<Control-r>", resetClassifiedAll),
                            ("<Control-a>", selectUnclassifiedAll),
-                           ("<Control-t>", toggleUnclassifiedAll)]
+                           ("<Control-t>", toggleUnclassifiedAll),
+                           ("<Return>", toNextFolder)]
 
         for key, func in self.bind_pairs:
             self.bind(key, func)
@@ -347,6 +382,8 @@ def manualClassify(target_path):
     window.maxsize(width=1300, height=600)
     window.title("Manual Classifier")
     text_frame = TextFrame(window, classify_dict.class_name)
-    photo_button = PhotoButtonFrame(parent=window, crop_path=crop_path, \
+    photo_button = PhotoButtonFrame(parent=window, \
+                                    crop_path=crop_path, \
+                                    training_path=training_path, \
                                     class_num=len(classify_dict.class_name))
     window.mainloop()

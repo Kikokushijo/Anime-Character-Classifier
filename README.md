@@ -2,7 +2,6 @@
 WARNING: STILL UNDER CONSTRUCT
 
 This project is just an NN experiment about classifying anime characters.
-opencv, tkinter, 
 
 To start with, you have to create folders and put video into it , and the whole structure should be like below:
 ```
