@@ -26,7 +26,7 @@ if __name__ == "__main__":
     cur_path = os.getcwd()
 
     if len(sys.argv) == 3:
-        target_path = os.path.join(cur_path, "video\%s" % sys.argv[2])
+        target_path = os.path.join(cur_path, "video", "%s" % sys.argv[2])
 
         if '\\' in sys.argv[2]:
             print("Invalid Foldername.")
