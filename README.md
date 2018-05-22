@@ -1,4 +1,4 @@
-# Anime_Character_Classifier
+# Manual Classifier
 WARNING: STILL UNDER CONSTRUCT
 
 This project is just an NN experiment about classifying anime characters.
